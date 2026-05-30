@@ -5,18 +5,19 @@ import AddressBook from "@modules/account/components/address-book"
 
 import { getRegion } from "@lib/data/regions"
 import { retrieveCustomer } from "@lib/data/customer"
+import {getCountryCode} from "@lib/data/cookies";
 
 export const metadata: Metadata = {
   title: "Addresses",
   description: "View your addresses",
 }
 
-export default async function Addresses(props: {
-  params: Promise<{ countryCode: string }>
-}) {
-  const params = await props.params
-  const { countryCode } = params
+export default async function Addresses() {
+  const countryCode = await getCountryCode()
   const customer = await retrieveCustomer()
+  if (!countryCode) {
+    notFound()
+  }
   const region = await getRegion(countryCode)
 
   if (!customer || !region) {

@@ -26,11 +26,19 @@ type CountrySelectProps = {
   regions: HttpTypes.StoreRegion[]
 }
 
+// Helper function to get cookie value on client side
+function getCookie(name: string): string | null {
+  if (typeof document === "undefined") {return null}
+  const value = `; ${document.cookie}`
+  const parts = value.split(`; ${name}=`)
+  if (parts.length === 2) {return parts.pop()?.split(";").shift() || null}
+  return null
+}
+
 const CountrySelect = ({ toggleState, regions }: CountrySelectProps) => {
   const [current, setCurrent] = useState<CountryOption | undefined>(undefined)
-
-  const { countryCode } = useParams()
-  const currentPath = usePathname().split(`/${countryCode}`)[1]
+  const [countryCode, setCountryCode] = useState<string | null>(null)
+  const currentPath = usePathname()
 
   const { state, close } = toggleState
 
@@ -48,16 +56,57 @@ const CountrySelect = ({ toggleState, regions }: CountrySelectProps) => {
       .sort((a, b) => a.label.localeCompare(b.label))
   }, [regions])
 
+  // Function to update country code from cookie
+  const updateCountryCodeFromCookie = () => {
+    const cookieCountryCode = getCookie("_medusa_country_code")
+    setCountryCode(cookieCountryCode)
+  }
+  useEffect(() => {
+    // Get country code from cookie on client side
+    updateCountryCodeFromCookie()
+
+    // Listen for focus events to refresh country code when user returns to the page
+    const handleFocus = () => {
+      updateCountryCodeFromCookie()
+    }
+
+    window.addEventListener("focus", handleFocus)
+    return () => window.removeEventListener("focus", handleFocus)
+  }, [])
   useEffect(() => {
     if (countryCode) {
-      const option = options?.find((o) => o?.country === countryCode)
+      const option = options?.find(
+          (o) => o?.country === countryCode.toLowerCase()
+      )
       setCurrent(option)
     }
   }, [options, countryCode])
-
-  const handleChange = (option: CountryOption) => {
-    updateRegion(option.country, currentPath)
+  const handleChange = async (option: CountryOption) => {
+    // Optimistically update the UI immediately
+    const newCountryCode = option.country.toLowerCase()
+    setCountryCode(newCountryCode)
+    // updateRegion(option.country, currentPath)
+    const selectedOption = options?.find(
+        (o) => o?.country?.toLowerCase() === newCountryCode
+    )
+    if (selectedOption && selectedOption.country) {
+      setCurrent({
+        country: selectedOption.country,
+        region: selectedOption.region,
+        label: selectedOption.label,
+      })
+    }
     close()
+    try {
+      // Update the region (this will set the cookie and redirect)
+      await updateRegion(option.country, currentPath)
+    } catch (error) {
+      // If update fails, revert to previous country code
+      updateCountryCodeFromCookie()
+      console.error("Failed to update region:", error)
+    }
+
+
   }
 
   return (
@@ -67,8 +116,10 @@ const CountrySelect = ({ toggleState, regions }: CountrySelectProps) => {
         onChange={handleChange}
         defaultValue={
           countryCode
-            ? options?.find((o) => o?.country === countryCode)
-            : undefined
+              ? (options?.find(
+                  (o) => o?.country?.toLowerCase() === countryCode.toLowerCase()
+              ) as CountryOption | undefined)
+              : undefined
         }
       >
         <ListboxButton className="py-1 w-full">

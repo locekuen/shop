@@ -4,6 +4,7 @@ import FeaturedProducts from "@modules/home/components/featured-products"
 import Hero from "@modules/home/components/hero"
 import { listCollections } from "@lib/data/collections"
 import { getRegion } from "@lib/data/regions"
+import {getCountryCode} from "@lib/data/cookies";
 
 export const metadata: Metadata = {
   title: "Medusa Next.js Starter Template",
@@ -11,12 +12,13 @@ export const metadata: Metadata = {
     "A performant frontend ecommerce starter template with Next.js 15 and Medusa.",
 }
 
-export default async function Home(props: {
-  params: Promise<{ countryCode: string }>
-}) {
-  const params = await props.params
+export default async function Home() {
 
-  const { countryCode } = params
+  const countryCode = await getCountryCode()
+
+  if (!countryCode) {
+    return null
+  }
 
   const region = await getRegion(countryCode)
 

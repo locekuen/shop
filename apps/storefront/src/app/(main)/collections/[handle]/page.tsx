@@ -6,16 +6,17 @@ import { listRegions } from "@lib/data/regions"
 import { StoreCollection, StoreRegion } from "@medusajs/types"
 import CollectionTemplate from "@modules/collections/templates"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
+import {getCountryCode} from "@lib/data/cookies";
 
 type Props = {
-  params: Promise<{ handle: string; countryCode: string }>
+  params: Promise<{ handle: string }>
   searchParams: Promise<{
     page?: string
     sortBy?: SortOptions
   }>
 }
 
-export const PRODUCT_LIMIT = 12
+// export const PRODUCT_LIMIT = 12
 
 export async function generateStaticParams() {
   const { collections } = await listCollections({
@@ -70,7 +71,11 @@ export default async function CollectionPage(props: Props) {
   const searchParams = await props.searchParams
   const params = await props.params
   const { sortBy, page } = searchParams
+  const countryCode = await getCountryCode()
 
+  if (!countryCode) {
+    notFound()
+  }
   const collection = await getCollectionByHandle(params.handle).then(
     (collection) => collection
   )
@@ -84,7 +89,7 @@ export default async function CollectionPage(props: Props) {
       collection={collection}
       page={page}
       sortBy={sortBy}
-      countryCode={params.countryCode}
+      countryCode={countryCode}
     />
   )
 }

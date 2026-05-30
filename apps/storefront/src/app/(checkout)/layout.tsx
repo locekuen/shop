@@ -25,7 +25,7 @@ export default function CheckoutLayout({
             </span>
           </LocalizedClientLink>
           <LocalizedClientLink
-            href="/"
+            href="/apps/storefront/public"
             className="txt-compact-xlarge-plus text-ui-fg-subtle hover:text-ui-fg-base uppercase"
             data-testid="store-link"
           >

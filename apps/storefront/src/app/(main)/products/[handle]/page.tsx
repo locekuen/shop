@@ -4,9 +4,10 @@ import { listProducts } from "@lib/data/products"
 import { getRegion, listRegions } from "@lib/data/regions"
 import ProductTemplate from "@modules/products/templates"
 import { HttpTypes } from "@medusajs/types"
+import {getCountryCode} from "@lib/data/cookies";
 
 type Props = {
-  params: Promise<{ countryCode: string; handle: string }>
+  params: Promise<{ handle: string }>
   searchParams: Promise<{ v_id?: string }>
 }
 
@@ -70,16 +71,20 @@ function getImagesForVariant(
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
+  const countryCode = await getCountryCode()
+
+  if (!countryCode) {
+    notFound()
+  }
   const params = await props.params
   const { handle } = params
-  const region = await getRegion(params.countryCode)
-
+  const region = await getRegion(countryCode)
   if (!region) {
     notFound()
   }
 
   const product = await listProducts({
-    countryCode: params.countryCode,
+    countryCode,
     queryParams: { handle },
   }).then(({ response }) => response.products[0])
 
@@ -100,17 +105,20 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
 export default async function ProductPage(props: Props) {
   const params = await props.params
-  const region = await getRegion(params.countryCode)
+  const countryCode = await getCountryCode()
   const searchParams = await props.searchParams
-
-  const selectedVariantId = searchParams.v_id
-
+  if (!countryCode) {
+    notFound()
+  }
+  const region = await getRegion(countryCode)
   if (!region) {
     notFound()
   }
+  const selectedVariantId = searchParams.v_id
+
 
   const pricedProduct = await listProducts({
-    countryCode: params.countryCode,
+    countryCode,
     queryParams: { handle: params.handle },
   }).then(({ response }) => response.products[0])
 
@@ -124,7 +132,7 @@ export default async function ProductPage(props: Props) {
     <ProductTemplate
       product={pricedProduct}
       region={region}
-      countryCode={params.countryCode}
+      countryCode={countryCode}
       images={images ?? []}
     />
   )

@@ -9,9 +9,9 @@ import {
   getAuthHeaders,
   getCacheOptions,
   getCacheTag,
-  getCartId,
+  getCartId, getCountryCode,
   removeCartId,
-  setCartId,
+  setCartId, setCountryCode,
 } from "./cookies"
 import { getRegion } from "./regions"
 import { getLocale } from "./locale-actions"
@@ -116,17 +116,19 @@ export async function updateCart(data: HttpTypes.StoreUpdateCart) {
 
 export async function addToCart({
   variantId,
-  quantity,
-  countryCode,
+  quantity
 }: {
   variantId: string
   quantity: number
-  countryCode: string
 }) {
   if (!variantId) {
     throw new Error("Missing variant ID when adding to cart")
   }
 
+  const countryCode = await getCountryCode()
+  if (!countryCode) {
+    throw new Error("Country code not found. Please select a country.")
+  }
   const cart = await getOrSetCart(countryCode)
 
   if (!cart) {
@@ -403,23 +405,20 @@ export async function placeOrder(cartId?: string) {
   }
 
   const cartRes = await sdk.store.cart
-    .complete(id, {}, headers)
-    .then(async (cartRes) => {
-      const cartCacheTag = await getCacheTag("carts")
-      revalidateTag(cartCacheTag)
-      return cartRes
-    })
-    .catch(medusaError)
+      .complete(id, {}, headers)
+      .then(async (cartRes) => {
+        const cartCacheTag = await getCacheTag("carts")
+        revalidateTag(cartCacheTag)
+        return cartRes
+      })
+      .catch(medusaError)
 
   if (cartRes?.type === "order") {
-    const countryCode =
-      cartRes.order.shipping_address?.country_code?.toLowerCase()
-
     const orderCacheTag = await getCacheTag("orders")
     revalidateTag(orderCacheTag)
 
     removeCartId()
-    redirect(`/${countryCode}/order/${cartRes?.order.id}/confirmed`)
+    redirect(`/order/${cartRes?.order.id}/confirmed`)
   }
 
   return cartRes.cart
@@ -438,6 +437,9 @@ export async function updateRegion(countryCode: string, currentPath: string) {
     throw new Error(`Region not found for country code: ${countryCode}`)
   }
 
+  // Set country code cookie
+  await setCountryCode(countryCode)
+
   if (cartId) {
     await updateCart({ region_id: region.id })
     const cartCacheTag = await getCacheTag("carts")
@@ -450,9 +452,8 @@ export async function updateRegion(countryCode: string, currentPath: string) {
   const productsCacheTag = await getCacheTag("products")
   revalidateTag(productsCacheTag)
 
-  redirect(`/${countryCode}${currentPath}`)
+  redirect(currentPath || "/")
 }
-
 export async function listCartOptions() {
   const cartId = await getCartId()
   const headers = {
