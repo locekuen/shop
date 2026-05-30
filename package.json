@@ -1,7 +1,7 @@
 {
   "name": "shop",
   "private": false,
-  "packageManager": "pnpm@11.5.0",
+  "packageManager": "pnpm@10.34.1",
   "engines": {
     "node": ">=20"
   },
