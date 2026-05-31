@@ -6,7 +6,11 @@ import { listRegions } from "@lib/data/regions"
 import { StoreRegion } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import CartButton from "@modules/layout/components/cart-button"
-import SideMenu from "@modules/layout/components/side-menu"
+import {retrieveCustomer} from "@lib/data/customer";
+import AccountDropdown from "@modules/account/components/account-dropdown";
+import {Space} from "antd";
+import CustomLanguageSelect from "@modules/layout/components/custom-language-select";
+import CustomCountrySelect from "@modules/layout/components/custom-country-select";
 
 export default async function Nav() {
   const [regions, locales, currentLocale] = await Promise.all([
@@ -15,16 +19,27 @@ export default async function Nav() {
     getLocale(),
   ])
 
+  console.log("regions:",regions)
+  console.log("locales:",locales)
+  console.log("currentLocale:",currentLocale)
+
+
+  const customer = await retrieveCustomer()
   return (
     <div className="sticky top-0 inset-x-0 z-50 group">
       <header className="relative h-16 mx-auto border-b duration-200 bg-white border-ui-border-base">
         <nav className="content-container txt-xsmall-plus text-ui-fg-subtle flex items-center justify-between w-full h-full text-small-regular">
           <div className="flex-1 basis-0 h-full flex items-center">
-            <div className="h-full">
-              <SideMenu regions={regions} locales={locales} currentLocale={currentLocale} />
-            </div>
-          </div>
+            <Space>
+              <CustomLanguageSelect locales={locales} currentLocale={currentLocale}/>
+              <CustomCountrySelect regions={regions}/>
+            </Space>
+            {/*<div className="h-full">*/}
 
+              {/*<CustomLanguageSelect regions={regions}/>*/}
+              {/*<SideMenu regions={regions} locales={locales} currentLocale={currentLocale} />*/}
+            {/*</div>*/}
+          </div>
           <div className="flex items-center h-full">
             <LocalizedClientLink
               href="/"
@@ -34,33 +49,43 @@ export default async function Nav() {
               Medusa Store
             </LocalizedClientLink>
           </div>
-
           <div className="flex items-center gap-x-6 h-full flex-1 basis-0 justify-end">
-            <div className="hidden small:flex items-center gap-x-6 h-full">
-              <LocalizedClientLink
-                className="hover:text-ui-fg-base"
-                href="/account"
-                data-testid="nav-account-link"
-              >
-                Account
-              </LocalizedClientLink>
-            </div>
-            <Suspense
-              fallback={
-                <LocalizedClientLink
-                  className="hover:text-ui-fg-base flex gap-2"
-                  href="/cart"
-                  data-testid="nav-cart-link"
-                >
-                  Cart (0)
-                </LocalizedClientLink>
+            <Space>
+              {
+                customer ? (
+                    <AccountDropdown>
+                      <LocalizedClientLink href={"/account"}>
+                        Hello, {customer.first_name}
+                      </LocalizedClientLink>
+                    </AccountDropdown>
+                ) : (
+                    <LocalizedClientLink
+                        className="hover:text-ui-fg-base"
+                        href="/account"
+                    >
+                      Login
+                    </LocalizedClientLink>
+                )
               }
-            >
-              <CartButton />
-            </Suspense>
+              <Suspense
+                  fallback={
+                    <LocalizedClientLink
+                        className="hover:text-ui-fg-base flex gap-2"
+                        href="/cart"
+                        data-testid="nav-cart-link"
+                    >
+                      Cart (0)
+                    </LocalizedClientLink>
+                  }
+              >
+                <CartButton />
+              </Suspense>
+              <div>haha</div>
+            </Space>
           </div>
         </nav>
       </header>
     </div>
   )
 }
+

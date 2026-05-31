@@ -90,13 +90,17 @@ export const removeCartId = async () => {
 
 export const COUNTRY_CODE_COOKIE_NAME = "_medusa_country_code"
 
+const getCountryCookieName = () =>
+    process.env.COUNTRY_CODE_COOKIE_NAME?.trim() ||
+    COUNTRY_CODE_COOKIE_NAME
+
 /**
  * Gets the current country code from cookies
  */
 export const getCountryCode = async (): Promise<string | null> => {
   try {
     const cookies = await nextCookies()
-    return cookies.get(COUNTRY_CODE_COOKIE_NAME)?.value ?? null
+    return cookies.get(getCountryCookieName())?.value ?? null
   } catch {
     return null
   }
@@ -107,7 +111,7 @@ export const getCountryCode = async (): Promise<string | null> => {
  */
 export const setCountryCode = async (countryCode: string) => {
   const cookies = await nextCookies()
-  cookies.set(COUNTRY_CODE_COOKIE_NAME, countryCode, {
+  cookies.set(getCountryCookieName(), countryCode, {
     maxAge: 60 * 60 * 24 * 365, // 1 year
     httpOnly: false, // Allow client-side access
     sameSite: "strict",

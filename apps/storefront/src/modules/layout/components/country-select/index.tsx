@@ -11,7 +11,7 @@ import { Fragment, useEffect, useMemo, useState } from "react"
 import ReactCountryFlag from "react-country-flag"
 
 import { StateType } from "@lib/hooks/use-toggle-state"
-import { useParams, usePathname } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { updateRegion } from "@lib/data/cart"
 import { HttpTypes } from "@medusajs/types"
 
@@ -26,6 +26,11 @@ type CountrySelectProps = {
   regions: HttpTypes.StoreRegion[]
 }
 
+export const COUNTRY_CODE_COOKIE_NAME = "_medusa_country_code"
+
+const getCountryCookieName = () =>
+    process.env.COUNTRY_CODE_COOKIE_NAME?.trim() ||
+    COUNTRY_CODE_COOKIE_NAME
 // Helper function to get cookie value on client side
 function getCookie(name: string): string | null {
   if (typeof document === "undefined") {return null}
