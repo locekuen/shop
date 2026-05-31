@@ -11,6 +11,7 @@ import AccountDropdown from "@modules/account/components/account-dropdown";
 import {Space} from "antd";
 import CustomLanguageSelect from "@modules/layout/components/custom-language-select";
 import CustomCountrySelect from "@modules/layout/components/custom-country-select";
+import CustomSearchProductBox from "@modules/layout/components/search-product-box";
 
 export default async function Nav() {
   const [regions, locales, currentLocale] = await Promise.all([
@@ -18,7 +19,6 @@ export default async function Nav() {
     listLocales(),
     getLocale(),
   ])
-
   console.log("regions:",regions)
   console.log("locales:",locales)
   console.log("currentLocale:",currentLocale)
@@ -41,13 +41,14 @@ export default async function Nav() {
             {/*</div>*/}
           </div>
           <div className="flex items-center h-full">
-            <LocalizedClientLink
-              href="/"
-              className="txt-compact-xlarge-plus hover:text-ui-fg-base uppercase"
-              data-testid="nav-store-link"
-            >
-              Medusa Store
-            </LocalizedClientLink>
+            <CustomSearchProductBox/>
+            {/*<LocalizedClientLink*/}
+            {/*  href="/"*/}
+            {/*  className="txt-compact-xlarge-plus hover:text-ui-fg-base uppercase"*/}
+            {/*  data-testid="nav-store-link"*/}
+            {/*>*/}
+            {/*  Medusa Store*/}
+            {/*</LocalizedClientLink>*/}
           </div>
           <div className="flex items-center gap-x-6 h-full flex-1 basis-0 justify-end">
             <Space>
@@ -63,7 +64,7 @@ export default async function Nav() {
                         className="hover:text-ui-fg-base"
                         href="/account"
                     >
-                      Login
+                      {"Sign in"}
                     </LocalizedClientLink>
                 )
               }
